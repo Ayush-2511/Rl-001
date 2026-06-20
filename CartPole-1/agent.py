@@ -17,6 +17,11 @@ class Agent:
             lr=0.001
         )
 
+        self.gamma = 0.99
+        self.epsilon = 1.0
+        self.epsilon_min = 0.01
+        self.epsilon_decay = 0.995
+
     def choose_action(self, state):
 
         if random.random() < self.epsilon:
@@ -41,9 +46,11 @@ class Agent:
 
         states = torch.tensor(states, dtype=torch.float32)
         actions = torch.tensor(actions, dtype=torch.long)
-        rewards = torch.tensor(rewards, dtype==torch.float32)
+        rewards = torch.tensor(rewards, dtype=torch.float32)
         next_states = torch.tensor(next_states, dtype=torch.float32)
         dones = torch.tensor(dones, dtype=torch.float32)
+
+        current_q = self.online_network(states)
 
         current_q = current_q.gather(1, actions.unsqueeze(1)).squeeze(1)
 
@@ -60,3 +67,8 @@ class Agent:
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+    def update_target_network(self):
+        self.target_network.load_state_dict(
+            self.online_network.state_dict()
+        )
